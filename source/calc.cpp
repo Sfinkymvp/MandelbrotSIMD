@@ -1,46 +1,24 @@
 #include <stdio.h>
+#include <math.h>
+#include <limits.h>
 #include <raylib.h>
 #include <assert.h>
 
 #include "calc.h"
 
+#define AMAZING_COLORS {0.00f, 0.10f, 0.20f}
+#define FIRE_COLORS {0.00f, 0.07f, 0.12f}
+#define RAINBOW_COLORS {0.00f, 0.33f, 0.67f}
+#define ICE_COLORS {0.30f, 0.20f, 0.20f}
 
-typedef double ftype;
-
-
-typedef struct {
-    ftype minX;
-    ftype maxX;
-    ftype minY;
-    ftype maxY;
-    ftype centerX;
-    ftype centerY;
-    ftype zoomLevel;
-} CameraContext;
-
-
-const int SCREEN_WIDTH = 1280;
-const int SCREEN_HEIGHT = 720;
-
-const ftype DEFAULT_ZOOM = 1.0;
-const ftype MOOV_COEFFICIENT = 0.05;
-
-const ftype MIN_X = -2.0;
-const ftype MAX_X = 1.0;
-const ftype MIN_Y = -1.0;
-const ftype MAX_Y = 1.0;
-
-const ftype START_X = -0.5;
-const ftype START_Y = 0;
-
-const int MAX_ITERATION_COUNT = 256;
-const int NO_RETURN_POINT_POW2 = 4.0;
+// Если < 0.05, то цвета будут меняться плавно, если больше - резко
+const float COLOR_CHANGE_COEFFICIENT = 0.05f;
 
 
 static void UpdateImage(Image* canvas, const CameraContext* cameraCtx);
 static void UpdateCamera(CameraContext* cameraCtx);
 static void UpdateViewport(CameraContext* cameraCtx);
-
+static Color GetPaletteColor(ftype t);
 
 void DrawFractal()
 {
@@ -86,24 +64,33 @@ static void UpdateImage(Image* canvas, const CameraContext* cameraCtx)
 
             int n = 0;
 
+            ftype xPow2 = 0.0;
+            ftype yPow2 = 0.0;
             for (ftype x = 0.0, y = 0.0; n < MAX_ITERATION_COUNT; n++) {
-                ftype x_pow2 = x * x;
-                ftype y_pow2 = y * y;
+                xPow2 = x * x;
+                yPow2 = y * y;
                 ftype xy = x * y;
 
-                if (x_pow2 + y_pow2 > NO_RETURN_POINT_POW2) {
+                if (xPow2 + yPow2 > NO_RETURN_POINT_POW2) {
                     break;
                 }
 
-                x = x_pow2 - y_pow2 + x0;
+                x = xPow2 - yPow2 + x0;
                 y = 2 * xy + y0;
             }
 
+            Color finalColor = {};
             if (n == MAX_ITERATION_COUNT) {
-                ImageDrawPixel(canvas, posX, posY, BLACK);
+                finalColor = BLACK;
             } else {
-                ImageDrawPixel(canvas, posX, posY, WHITE);
+                ftype modulus = sqrt(xPow2 + yPow2);
+                ftype smooth = (ftype)n + 1.0 - log2(log2(modulus));
+
+                float t = (float)smooth * COLOR_CHANGE_COEFFICIENT;
+                finalColor = GetPaletteColor(fmodf(t, 1.0));
             }
+
+            ImageDrawPixel(canvas, posX, posY, finalColor);
         }
     }
 }
@@ -152,3 +139,16 @@ static void UpdateViewport(CameraContext* cameraCtx)
     cameraCtx->maxY = cameraCtx->centerY + viewportHeight / 2;
 }
 
+
+static Color GetPaletteColor(ftype t) {
+    float a[] = {0.5f, 0.5f, 0.5f};
+    float b[] = {0.5f, 0.5f, 0.5f};
+    float c[] = {1.0f, 1.0f, 1.0f};
+    float d[] = AMAZING_COLORS;
+
+    unsigned char r = (unsigned char)(255 * (a[0] + b[0] * cos(2 * PI * (c[0] * t + d[0]))));
+    unsigned char g = (unsigned char)(255 * (a[1] + b[1] * cos(2 * PI * (c[1] * t + d[1]))));
+    unsigned char b_val = (unsigned char)(255 * (a[2] + b[2] * cos(2 * PI * (c[2] * t + d[2]))));
+
+    return (Color){ r, g, b_val, 255 };
+}
