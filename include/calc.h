@@ -33,6 +33,8 @@ const ftype START_Y = 0;
 const int MAX_ITERATION_COUNT = 256;
 const int NO_RETURN_POINT_POW2 = 4.0;
 
+const int DOUBLE_PACK_SIZE = 8;
+
 
 void DrawFractal();
 

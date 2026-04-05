@@ -20,17 +20,17 @@ FLAGS = -O3 -I$(INCDIR) -fopenmp -ggdb3 -std=c++17 \
 	-Wunreachable-code -Wunused -Wuseless-cast -Wvariadic-macros \
 	-Wno-literal-suffix -Wno-missing-field-initializers \
 	-Wno-narrowing -Wno-old-style-cast -Wno-varargs \
-    -fcheck-new -fsized-deallocation -fstack-protector \
+    -fcheck-new -fsized-deallocation \
 	-fstrict-overflow -flto-odr-type-merging -fno-omit-frame-pointer \
-	-Wstack-usage=8192 -pie -fPIE -Werror=vla \
-	-fsanitize=address,alignment,bool,bounds,enum,float-cast-overflow,float-divide-by-zero,integer-divide-by-zero,leak,nonnull-attribute,null,object-size,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr
+	-Wstack-usage=8192 -pie -fPIE -Werror=vla
+FLAGS += -march=skylake-avx512 -ffast-math -fopt-info-vec-optimized -march=native -mprefer-vector-width=512
 
 FILES = $(OBJDIR)/main.o $(OBJDIR)/calc.o
 
 EXECUTABLE_FILE = mandelbrot.out
 
 build: $(FILES)
-	mkdir -p $(BINDIR)
+	@mkdir -p $(BINDIR)
 	@g++ $(FLAGS) $(FILES) -o $(BINDIR)/$(EXECUTABLE_FILE) $(LIBS)
 
 run: build
