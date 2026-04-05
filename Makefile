@@ -6,7 +6,7 @@ INCDIR = include
 SCRDIR = scripts
 
 LIBS = -lraylib -lGL -lm -ldl -lrt -lX11
-FLAGS = -O3 -I$(INCDIR) -fopenmp -ggdb3 -std=c++17 \
+DEF_FLAGS = -I$(INCDIR) -fopenmp -ggdb3 -std=c++17 \
 	-Wall -Wextra -Weffc++ -Waggressive-loop-optimizations -Wc++14-compat \
 	-Wmissing-declarations -Wcast-align -Wcast-qual -Wchar-subscripts \
 	-Wconditionally-supported -Wconversion -Wctor-dtor-privacy \
@@ -23,22 +23,50 @@ FLAGS = -O3 -I$(INCDIR) -fopenmp -ggdb3 -std=c++17 \
     -fcheck-new -fsized-deallocation \
 	-fstrict-overflow -flto-odr-type-merging -fno-omit-frame-pointer \
 	-Wstack-usage=8192 -pie -fPIE -Werror=vla
-FLAGS += -march=skylake-avx512 -ffast-math -fopt-info-vec-optimized -march=native -mprefer-vector-width=512
+AVX_FLAGS += -ffast-math -fopt-info-vec-optimized -march=native -mprefer-vector-width=512
 
-FILES = $(OBJDIR)/main.o $(OBJDIR)/calc.o
+
+FILES = $(SRCDIR)/main.cpp $(SRCDIR)/calc.cpp
 
 EXECUTABLE_FILE = mandelbrot.out
 
-build: $(FILES)
+$(BINDIR):
 	@mkdir -p $(BINDIR)
-	@g++ $(FLAGS) $(FILES) -o $(BINDIR)/$(EXECUTABLE_FILE) $(LIBS)
 
-run: build
+build: $(FILES) $(BINDIR)
+	@g++ $(DEF_FLAGS) $(FILES) -o $(BINDIR)/$(EXECUTABLE_FILE) $(LIBS)
+
+run: 
 	@./$(BINDIR)/$(EXECUTABLE_FILE)
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
-	@mkdir -p $(OBJDIR)
-	@g++ -c $< $(FLAGS) -o $@ $(LIBS)
+no_opti_O0: $(FILES) $(BINDIR)
+	@g++ -O0 $(DEF_FLAGS) $(FILES) -o $(BINDIR)/$(EXECUTABLE_FILE) $(LIBS)
+	@$(MAKE) run
+
+no_opti_O3: $(FILES) $(BINDIR)
+	@g++ -O3 $(DEF_FLAGS) $(FILES) -o $(BINDIR)/$(EXECUTABLE_FILE) $(LIBS)
+	@$(MAKE) run
+
+package_opti_O0: $(FILES) $(BINDIR)
+	@g++ -DPACKAGE_OPTIMIZATION -O0 $(DEF_FLAGS) $(FILES) -o $(BINDIR)/$(EXECUTABLE_FILE) $(LIBS)
+	@$(MAKE) run
+
+package_opti_O3: $(FILES) $(BINDIR)
+	@g++ -DPACKAGE_OPTIMIZATION -O3 $(DEF_FLAGS) $(FILES) -o $(BINDIR)/$(EXECUTABLE_FILE) $(LIBS)
+	@$(MAKE) run
+
+avx512_opti_O0: $(FILES) $(BINDIR)
+	@g++ -DAVX512_OPTIMIZATION -O0 $(AVX_FLAGS) $(DEF_FLAGS) $(FILES) -o $(BINDIR)/$(EXECUTABLE_FILE) $(LIBS)
+	@$(MAKE) run
+
+avx512_opti_O3: $(FILES) $(BINDIR)
+	@g++ -DAVX512_OPTIMIZATION -O3 $(AVX_FLAGS) $(DEF_FLAGS) $(FILES) -o $(BINDIR)/$(EXECUTABLE_FILE) $(LIBS)
+	@$(MAKE) run
+
+avx512_opti_O3_w_multithread: $(FILES) $(BINDIR)
+	@g++ -DAVX512_OPTIMIZATION -DMULTITHREAD_OPTIMIZATION -O3 $(AVX_FLAGS) $(DEF_FLAGS) \
+		$(FILES) -o $(BINDIR)/$(EXECUTABLE_FILE) $(LIBS)
+	@$(MAKE) run
 
 clean: 
 	@rm -rf $(BINDIR)
