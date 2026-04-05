@@ -6,7 +6,7 @@ INCDIR = include
 SCRDIR = scripts
 
 LIBS = -lraylib -lGL -lm -ldl -lrt -lX11
-FLAGS = -O3 -I$(INCDIR) -ggdb3 -std=c++17 \
+FLAGS = -O3 -I$(INCDIR) -fopenmp -ggdb3 -std=c++17 \
 	-Wall -Wextra -Weffc++ -Waggressive-loop-optimizations -Wc++14-compat \
 	-Wmissing-declarations -Wcast-align -Wcast-qual -Wchar-subscripts \
 	-Wconditionally-supported -Wconversion -Wctor-dtor-privacy \
@@ -30,10 +30,11 @@ FILES = $(OBJDIR)/main.o $(OBJDIR)/calc.o
 EXECUTABLE_FILE = mandelbrot.out
 
 build: $(FILES)
+	mkdir -p $(BINDIR)
 	@g++ $(FLAGS) $(FILES) -o $(BINDIR)/$(EXECUTABLE_FILE) $(LIBS)
 
 run: build
-	./$(BINDIR)/$(EXECUTABLE_FILE)
+	@./$(BINDIR)/$(EXECUTABLE_FILE)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	@mkdir -p $(OBJDIR)

@@ -2,7 +2,7 @@
 #define CALC_H_
 
 
-void Function();
+void DrawFractal();
 
 
 #endif // CALC_H_

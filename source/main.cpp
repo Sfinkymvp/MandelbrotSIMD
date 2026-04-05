@@ -3,7 +3,7 @@
 
 int main()
 {
-    Function();
+    DrawFractal();
 
     return 0;
 }
