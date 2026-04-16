@@ -11,7 +11,7 @@ RESDIR = results
 LIBS = -lraylib -lGL -lm -ldl -lrt -lX11
 CC = g++
 
-DEF_FLAGS = -I$(INCDIR) -ggdb3 -std=c++17 \
+DEF_FLAGS = $(AVX_FLAGS) -I$(INCDIR) -ggdb3 -std=c++17 \
 	-Wall -Wextra -Weffc++ -Waggressive-loop-optimizations -Wc++14-compat \
 	-Wmissing-declarations -Wcast-align -Wcast-qual -Wchar-subscripts \
 	-Wconditionally-supported -Wconversion -Wctor-dtor-privacy \
