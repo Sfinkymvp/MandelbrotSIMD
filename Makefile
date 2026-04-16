@@ -1,12 +1,17 @@
+MAKEFLAGS += --no-print-directory
+
 OBJDIR = obj
 BINDIR = bin
 IMGDIR = img
 SRCDIR = source
 INCDIR = include
 SCRDIR = scripts
+RESDIR = results
 
 LIBS = -lraylib -lGL -lm -ldl -lrt -lX11
-DEF_FLAGS = -I$(INCDIR) -fopenmp -ggdb3 -std=c++17 \
+CC = g++
+
+DEF_FLAGS = -I$(INCDIR) -ggdb3 -std=c++17 \
 	-Wall -Wextra -Weffc++ -Waggressive-loop-optimizations -Wc++14-compat \
 	-Wmissing-declarations -Wcast-align -Wcast-qual -Wchar-subscripts \
 	-Wconditionally-supported -Wconversion -Wctor-dtor-privacy \
@@ -23,51 +28,78 @@ DEF_FLAGS = -I$(INCDIR) -fopenmp -ggdb3 -std=c++17 \
     -fcheck-new -fsized-deallocation \
 	-fstrict-overflow -flto-odr-type-merging -fno-omit-frame-pointer \
 	-Wstack-usage=8192 -pie -fPIE -Werror=vla
-AVX_FLAGS += -ffast-math -fopt-info-vec-optimized -march=native -mprefer-vector-width=512
 
+DEF_FILES = $(SRCDIR)/main.cpp $(SRCDIR)/fractal.cpp
 
-FILES = $(SRCDIR)/main.cpp $(SRCDIR)/calc.cpp
+AVX_FLAGS = -ffast-math -march=native -mprefer-vector-width=512
+NO_OPTI_FILES = $(SRCDIR)/calc_no_opti.cpp
+PACKAGE_OPTI_FILES = $(SRCDIR)/calc_package.cpp
+AVX512_OPTI_FILES = $(SRCDIR)/calc_avx512.cpp
 
 EXECUTABLE_FILE = mandelbrot.out
 
-$(BINDIR):
-	@mkdir -p $(BINDIR)
+EXTRA_DEFS = 
+CURRENT_FLAGS = $(DEF_FLAGS)
+CURRENT_FILES = $(DEF_FILES)
 
-build: $(FILES) $(BINDIR)
-	@g++ $(DEF_FLAGS) $(FILES) -o $(BINDIR)/$(EXECUTABLE_FILE) $(LIBS)
+ITERS ?= 100
+
+ifeq ($(BENCHMARK), YES)
+	EXTRA_DEFS += -DBENCHMARK -DBENCH_ITERS=$(ITERS)
+endif 
+
+ifeq ($(COLOR), YES)
+	EXTRA_DEFS += -DCOLOR_DRAWING
+endif
+
+ifeq ($(MULTITHREAD), YES)
+	EXTRA_DEFS += -DMULTITHREAD_OPTIMIZATION -fopenmp
+endif
+
+ifdef OPTI
+	OPT_LEVEL = -$(OPTI)
+endif
+
+
+.PHONY: all run no_opti package_opti avx512_opti .build
+
+all: CURRENT_FILES += $(NO_OPTI_FILES)
+all: build
+
+.build: $(CURRENT_FILES) $(BINDIR)
+	@$(CC) $(OPT_LEVEL) $(EXTRA_DEFS) $(CURRENT_FLAGS) $(CURRENT_FILES) -o $(BINDIR)/$(EXECUTABLE_FILE) $(LIBS)
 
 run: 
 	@./$(BINDIR)/$(EXECUTABLE_FILE)
 
-no_opti_O0: $(FILES) $(BINDIR)
-	@g++ -O0 $(DEF_FLAGS) $(FILES) -o $(BINDIR)/$(EXECUTABLE_FILE) $(LIBS)
-	@$(MAKE) run
+no_opti: CURRENT_FILES += $(NO_OPTI_FILES)
+ifeq ($(BENCHMARK), YES)
+no_opti: CURRENT_FLAGS += -DCONFIG='"No optimization $(OPTI)"'
+endif
+no_opti: .build
 
-no_opti_O3: $(FILES) $(BINDIR)
-	@g++ -O3 $(DEF_FLAGS) $(FILES) -o $(BINDIR)/$(EXECUTABLE_FILE) $(LIBS)
-	@$(MAKE) run
+package_opti: CURRENT_FILES += $(PACKAGE_OPTI_FILES)
+ifeq ($(BENCHMARK), YES)
+package_opti: CURRENT_FLAGS += -DCONFIG='"Package optimization $(OPTI)"'
+endif
+package_opti: EXTRA_DEFS += -DPACKAGE_OPTIMIZATION
+package_opti: .build
 
-package_opti_O0: $(FILES) $(BINDIR)
-	@g++ -DPACKAGE_OPTIMIZATION -O0 $(DEF_FLAGS) $(FILES) -o $(BINDIR)/$(EXECUTABLE_FILE) $(LIBS)
-	@$(MAKE) run
+avx512_opti: CURRENT_FILES += $(AVX512_OPTI_FILES)
+ifeq ($(BENCHMARK), YES)
+avx512_opti: CURRENT_FLAGS += -DCONFIG='"AVX512 optimization $(OPTI)"' $(AVX_FLAGS)
+endif
+avx512_opti: EXTRA_DEFS += -DAVX512_OPTIMIZATION
+avx512_opti: .build
 
-package_opti_O3: $(FILES) $(BINDIR)
-	@g++ -DPACKAGE_OPTIMIZATION -O3 $(DEF_FLAGS) $(FILES) -o $(BINDIR)/$(EXECUTABLE_FILE) $(LIBS)
-	@$(MAKE) run
+clean_all: clean_programs clean_results
 
-avx512_opti_O0: $(FILES) $(BINDIR)
-	@g++ -DAVX512_OPTIMIZATION -O0 $(AVX_FLAGS) $(DEF_FLAGS) $(FILES) -o $(BINDIR)/$(EXECUTABLE_FILE) $(LIBS)
-	@$(MAKE) run
-
-avx512_opti_O3: $(FILES) $(BINDIR)
-	@g++ -DAVX512_OPTIMIZATION -O3 $(AVX_FLAGS) $(DEF_FLAGS) $(FILES) -o $(BINDIR)/$(EXECUTABLE_FILE) $(LIBS)
-	@$(MAKE) run
-
-avx512_opti_O3_w_multithread: $(FILES) $(BINDIR)
-	@g++ -DAVX512_OPTIMIZATION -DMULTITHREAD_OPTIMIZATION -O3 $(AVX_FLAGS) $(DEF_FLAGS) \
-		$(FILES) -o $(BINDIR)/$(EXECUTABLE_FILE) $(LIBS)
-	@$(MAKE) run
-
-clean: 
+clean_programs: 
 	@rm -rf $(BINDIR)
 	@rm -rf $(OBJDIR)
+
+clean_results:
+	@rm -rf $(RESDIR)
+
+$(BINDIR):
+	@mkdir -p $(BINDIR)

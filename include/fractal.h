@@ -2,8 +2,10 @@
 #define CALC_H_
 
 
-typedef double ftype;
+#include <raylib.h>
 
+
+typedef double ftype;
 
 typedef struct {
     ftype minX;
@@ -35,8 +37,24 @@ const int NO_RETURN_POINT_POW2 = 4.0;
 
 const int DOUBLE_PACK_SIZE = 8;
 
+// Если < 0.05, то цвета будут меняться плавно, если больше - резко
+const float COLOR_CHANGE_COEFFICIENT = 0.05f;
 
-void DrawFractal();
+
+// Цветовые схемы для множества Мандельброта
+#define AMAZING_COLORS {0.00f, 0.10f, 0.20f}
+#define FIRE_COLORS {0.00f, 0.07f, 0.12f}
+#define RAINBOW_COLORS {0.00f, 0.33f, 0.67f}
+#define ICE_COLORS {0.30f, 0.20f, 0.20f}
+
+
+#ifdef BENCHMARK
+
+unsigned long long RunFractal(unsigned int iterations);
+#else
+
+void RunFractal();
+#endif // BENCHMARK
 
 
 #endif // CALC_H_
