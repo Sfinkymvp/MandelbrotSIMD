@@ -18,27 +18,11 @@ typedef struct {
 } CameraContext;
 
 
-const int SCREEN_WIDTH = 1280;
-const int SCREEN_HEIGHT = 720;
-
-const ftype DEFAULT_ZOOM = 1.0;
-const ftype MOOV_COEFFICIENT = 0.05;
-
-const ftype MIN_X = -2.0;
-const ftype MAX_X = 1.0;
-const ftype MIN_Y = -1.0;
-const ftype MAX_Y = 1.0;
-
-const ftype START_X = -0.5;
-const ftype START_Y = 0;
-
-const int MAX_ITERATION_COUNT = 256;
-const int NO_RETURN_POINT_POW2 = 4.0;
-
-const int DOUBLE_PACK_SIZE = 8;
-
-// Если < 0.05, то цвета будут меняться плавно, если больше - резко
-const float COLOR_CHANGE_COEFFICIENT = 0.05f;
+extern const int SCREEN_WIDTH;
+extern const int SCREEN_HEIGHT;
+extern const int MAX_ITERATION_COUNT;
+extern const float COLOR_CHANGE_COEFFICIENT;
+extern const int NO_RETURN_POINT_POW2;
 
 
 // Цветовые схемы для множества Мандельброта
@@ -55,6 +39,12 @@ unsigned long long RunFractal(unsigned int iterations);
 
 void RunFractal();
 #endif // BENCHMARK
+
+#ifdef COLOR_DRAWING
+
+Color MyGetColor(ftype t);
+#endif // COLOR_DRAWING
+
 
 
 #endif // CALC_H_

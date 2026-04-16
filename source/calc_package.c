@@ -6,6 +6,9 @@
 #include "calc_package.h"
 
 
+const int DOUBLE_PACK_SIZE = 8;
+
+
 void UpdateImagePackageOptimization(Image* canvas, const CameraContext* cameraCtx)
 {
     assert(canvas); assert(canvas->data); assert(cameraCtx);
@@ -57,8 +60,8 @@ void UpdateImagePackageOptimization(Image* canvas, const CameraContext* cameraCt
                     finalColor = BLACK;
                 } else {
 #ifdef COLOR_DRAWING
-                double smooth = n + 1.0 - log2(log2(sqrt(x * x + y * y)));
-                finalColor = GetColor(fmodf((float)smooth * COLOR_CHANGE_COEFFICIENT, 1.0f));
+                double smooth = n + 1.0 - log2(log2(sqrt(arrayX[i] * arrayX[i] + arrayY[i] * arrayY[i])));
+                finalColor = MyGetColor(fmodf((float)smooth * COLOR_CHANGE_COEFFICIENT, 1.0f));
 #else
                 finalColor = WHITE;
 #endif // COLOR_DRAWING

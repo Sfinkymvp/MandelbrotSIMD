@@ -7,6 +7,27 @@
 
 #include "fractal.h"
 
+
+const int SCREEN_WIDTH = 1280;
+const int SCREEN_HEIGHT = 720;
+
+const ftype DEFAULT_ZOOM = 1.0;
+const ftype MOOV_COEFFICIENT = 0.05;
+
+const ftype MIN_X = -2.0;
+const ftype MAX_X = 1.0;
+const ftype MIN_Y = -1.0;
+const ftype MAX_Y = 1.0;
+
+const ftype START_X = -0.5;
+const ftype START_Y = 0;
+
+const int MAX_ITERATION_COUNT = 256;
+const int NO_RETURN_POINT_POW2 = 4.0;
+
+const float COLOR_CHANGE_COEFFICIENT = 0.05f;
+
+
 #if defined(PACKAGE_OPTIMIZATION)
 
     #include "calc_package.h"
@@ -23,15 +44,9 @@ static void ComputeFractalData(Image* canvas, CameraContext* ctx);
 
 #ifndef BENCHMARK
 
-static void UpdateCamera(CameraContext* cameraCtx);
+static void MyUpdateCamera(CameraContext* cameraCtx);
 static void UpdateViewport(CameraContext* cameraCtx);
 #endif // BENCHMARK
-
-
-#ifdef COLOR_DRAWING
-
-static Color GetColor(ftype t);
-#endif // COLOR_DRAWING
 
 
 #ifdef BENCHMARK
@@ -61,7 +76,7 @@ void RunFractal()
     Texture2D fractalTexture = LoadTextureFromImage(canvas);
 
     while (!WindowShouldClose()) {
-        UpdateCamera(&cameraCtx);
+        MyUpdateCamera(&cameraCtx);
         ComputeFractalData(&canvas, &cameraCtx);
         
         UpdateTexture(fractalTexture, canvas.data);
@@ -96,7 +111,7 @@ static void ComputeFractalData(Image* canvas, CameraContext* cameraCtx)
 
 #ifndef BENCHMARK
 
-static void UpdateCamera(CameraContext* cameraCtx)
+static void MyUpdateCamera(CameraContext* cameraCtx)
 {
     assert(cameraCtx);
 
@@ -142,7 +157,7 @@ static void UpdateViewport(CameraContext* cameraCtx)
 
 #ifdef COLOR_DRAWING
 
-static Color GetColor(ftype t) {
+Color MyGetColor(ftype t) {
     float a[] = {0.5f, 0.5f, 0.5f};
     float b[] = {0.5f, 0.5f, 0.5f};
     float c[] = {1.0f, 1.0f, 1.0f};

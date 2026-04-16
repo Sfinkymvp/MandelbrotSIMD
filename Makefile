@@ -9,32 +9,16 @@ SCRDIR = scripts
 RESDIR = results
 
 LIBS = -lraylib -lGL -lm -ldl -lrt -lX11
-CC = g++
+CC = gcc
 
-DEF_FLAGS = $(AVX_FLAGS) -I$(INCDIR) -ggdb3 -std=c++17 \
-	-Wall -Wextra -Weffc++ -Waggressive-loop-optimizations -Wc++14-compat \
-	-Wmissing-declarations -Wcast-align -Wcast-qual -Wchar-subscripts \
-	-Wconditionally-supported -Wconversion -Wctor-dtor-privacy \
-	-Wempty-body -Wfloat-equal -Wformat-nonliteral -Wformat-security \
-	-Wformat-signedness -Wformat=2 -Winline -Wlogical-op \
-	-Wnon-virtual-dtor -Wopenmp-simd -Woverloaded-virtual -Wpacked \
-	-Wpointer-arith -Winit-self -Wredundant-decls -Wshadow \
-	-Wsign-conversion -Wsign-promo -Wstrict-null-sentinel -Wstrict-overflow=2 \
-	-Wsuggest-attribute=noreturn -Wsuggest-final-methods -Wsuggest-final-types \
-	-Wsuggest-override -Wswitch-default -Wundef \
-	-Wunreachable-code -Wunused -Wuseless-cast -Wvariadic-macros \
-	-Wno-literal-suffix -Wno-missing-field-initializers \
-	-Wno-narrowing -Wno-old-style-cast -Wno-varargs \
-    -fcheck-new -fsized-deallocation \
-	-fstrict-overflow -flto-odr-type-merging -fno-omit-frame-pointer \
-	-Wstack-usage=8192 -pie -fPIE -Werror=vla
+DEF_FLAGS = $(AVX_FLAGS) -I$(INCDIR) -pie -fPIE
 
-DEF_FILES = $(SRCDIR)/main.cpp $(SRCDIR)/fractal.cpp
+DEF_FILES = $(SRCDIR)/main.c $(SRCDIR)/fractal.c
 
 AVX_FLAGS = -ffast-math -march=native -mprefer-vector-width=512
-NO_OPTI_FILES = $(SRCDIR)/calc_no_opti.cpp
-PACKAGE_OPTI_FILES = $(SRCDIR)/calc_package.cpp
-AVX512_OPTI_FILES = $(SRCDIR)/calc_avx512.cpp
+NO_OPTI_FILES = $(SRCDIR)/calc_no_opti.c
+PACKAGE_OPTI_FILES = $(SRCDIR)/calc_package.c
+AVX512_OPTI_FILES = $(SRCDIR)/calc_avx512.c
 
 EXECUTABLE_FILE = mandelbrot.out
 

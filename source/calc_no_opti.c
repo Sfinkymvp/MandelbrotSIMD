@@ -40,8 +40,8 @@ void UpdateImageNoOptimization(Image* canvas, const CameraContext* cameraCtx)
                 finalColor = BLACK;
             } else {
 #ifdef COLOR_DRAWING
-                double smooth = n + 1.0 - log2(log2(sqrt(x * x + y * y)));
-                finalColor = GetColor(fmodf((float)smooth * COLOR_CHANGE_COEFFICIENT, 1.0f));
+                int color = n % 2 * 255;
+                finalColor = (Color){color, color, color, color};
 #else
                 finalColor = WHITE;
 #endif // COLOR_DRAWING

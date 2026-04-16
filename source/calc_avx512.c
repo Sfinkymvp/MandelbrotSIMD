@@ -7,6 +7,9 @@
 #include "calc_avx512.h"
 
 
+const int DOUBLE_PACK_SIZE = 8;
+
+
 void UpdateImageAVX512Optimization(Image* canvas, const CameraContext* cameraCtx)
 {
     assert(canvas); assert(canvas->data); assert(cameraCtx);
@@ -39,29 +42,35 @@ void UpdateImageAVX512Optimization(Image* canvas, const CameraContext* cameraCtx
             __m512d arrayModulusPow2 = _mm512_set1_pd(0.0);
             __m512i nCounter = _mm512_set1_epi64(0ll);
 
+            __m512d two = _mm512_set1_pd(2.0);
+            __m512i oneI = _mm512_set1_epi64(1ll);
+            __m512d limitPow2 = _mm512_set1_pd(NO_RETURN_POINT_POW2);
+
             unsigned char alive_mask = 0xFF;
             int n = 0;
 
             for (; n < MAX_ITERATION_COUNT && alive_mask; n++) {
-                arrayXPow2 = _mm512_mask_mul_pd(arrayXPow2, alive_mask, arrayX, arrayX);
-                arrayYPow2 = _mm512_mask_mul_pd(arrayYPow2, alive_mask, arrayY, arrayY);
+                arrayXPow2 = _mm512_mul_pd(arrayX, arrayX);
+                arrayYPow2 = _mm512_mul_pd(arrayY, arrayY);
 
-                arrayY = _mm512_mask_mul_pd(arrayY, alive_mask, arrayX, arrayY);
-                arrayY = _mm512_mask_mul_pd(arrayY, alive_mask, _mm512_set1_pd(2.0), arrayY);
-                arrayY = _mm512_mask_add_pd(arrayY, alive_mask, arrayY, arrayY0);
-
-                arrayX = _mm512_mask_sub_pd(arrayX, alive_mask, arrayXPow2, arrayYPow2);
-                arrayX = _mm512_mask_add_pd(arrayX, alive_mask, arrayX, arrayX0);
-
-                arrayModulusPow2 = _mm512_mask_add_pd(arrayModulusPow2, alive_mask, arrayXPow2, arrayYPow2);
-                __mmask8 in_bounds = _mm512_cmp_pd_mask(arrayModulusPow2, _mm512_set1_pd(NO_RETURN_POINT_POW2), _CMP_LT_OQ);
+                arrayModulusPow2 = _mm512_add_pd(arrayXPow2, arrayYPow2);
+                __mmask8 in_bounds = _mm512_cmp_pd_mask(arrayModulusPow2, limitPow2, _CMP_LT_OQ);
                 alive_mask &= in_bounds;
 
-                nCounter = _mm512_mask_add_epi64(nCounter, alive_mask, nCounter, _mm512_set1_epi64(1ll));
+                if (!alive_mask) {
+                    break;
+                }
+
+                __m512d xy = _mm512_mul_pd(arrayX, arrayY);
+                arrayY = _mm512_fmadd_pd(xy, two, arrayY0);
+                arrayX = _mm512_sub_pd(arrayXPow2, arrayYPow2);
+                arrayX = _mm512_add_pd(arrayX, arrayX0);
+
+                nCounter = _mm512_mask_add_epi64(nCounter, alive_mask, nCounter, oneI);
             }
 
-            alignas(64) long long resCounter[DOUBLE_PACK_SIZE] = {};
-            alignas(64) double resModulusPow2[DOUBLE_PACK_SIZE] = {};
+            long long resCounter[DOUBLE_PACK_SIZE] = {};
+            double resModulusPow2[DOUBLE_PACK_SIZE] = {};
             _mm512_store_epi64(resCounter, nCounter);
             _mm512_store_pd(resModulusPow2, arrayModulusPow2);
             for (int i = 0; i < DOUBLE_PACK_SIZE; i++) {
@@ -70,8 +79,8 @@ void UpdateImageAVX512Optimization(Image* canvas, const CameraContext* cameraCtx
                     finalColor = BLACK;
                 } else {
 #ifdef COLOR_DRAWING
-                double smooth = n + 1.0 - log2(log2(sqrt(x * x + y * y)));
-                finalColor = GetColor(fmodf((float)smooth * COLOR_CHANGE_COEFFICIENT, 1.0f));
+                int color = n % 2 * 255;
+                finalColor = (Color){color, color, color, color};
 #else
                 finalColor = WHITE;
 #endif // COLOR_DRAWING
